@@ -22,65 +22,75 @@
 
         <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">Submit</button>
     </form>
+    <div class="bg-white p-4 border border-gray-200 rounded-md shadow-md max-w-md mx-auto mt-5">
+        <p id="dynamic-text" class="text-gray-800">Result will appear here.</p>
+    </div>          
 </div>
 
-
 <script>
-  document.querySelector("#mic-button").addEventListener("click", async () => {
-    const micButton = document.querySelector("#mic-button");
-    const statusText = document.querySelector("#status");
-    const audioDataInput = document.querySelector("#audioData");
-    
-    let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    let recorder = new MediaRecorder(stream);
-    let chunks = [];
-
-    recorder.ondataavailable = (e) => {
-      chunks.push(e.data);
-    };
-
-    recorder.onstop = async () => {
-      let audioBlob = new Blob(chunks, { type: "audio/wav" });
-      let reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
-      reader.onloadend = () => {
-        audioDataInput.value = reader.result.split(",")[1]; // Set the base64 audio data
-        statusText.textContent = "Recording complete. Ready to submit.";
+    document.querySelector("#mic-button").addEventListener("click", async () => {
+      const micButton = document.querySelector("#mic-button");
+      const statusText = document.querySelector("#status");
+      const audioDataInput = document.querySelector("#audioData");
+  
+      let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      let recorder = new MediaRecorder(stream);
+      let chunks = [];
+  
+      recorder.ondataavailable = (e) => {
+        chunks.push(e.data);
       };
-    };
-
-    statusText.textContent = "Recording...";
-    recorder.start();
-    setTimeout(() => {
-      recorder.stop();
-      statusText.textContent = "Processing audio...";
-    }, 5000); // Record for 5 seconds
-  });
-
-  document.querySelector("#audioForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const choice = formData.get("choice");
-    const audioData = formData.get("audioData");
-
-    fetch(`/${choice}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ audioData }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((err) => {
-        console.error("Error:", err);
-      });
-  });
+  
+      recorder.onstop = async () => {
+        let audioBlob = new Blob(chunks, { type: "audio/wav" });
+        let reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          audioDataInput.value = reader.result.split(",")[1]; // Set the base64 audio data
+          statusText.textContent = "Recording complete. Ready to submit.";
+        };
+      };
+  
+      statusText.textContent = "Recording...";
+      recorder.start();
+      setTimeout(() => {
+        recorder.stop();
+        statusText.textContent = "Processing audio...";
+      }, 5000); // Record for 5 seconds
+    });
+  
+    document.querySelector("#audioForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+  
+      const formData = new FormData(e.target);
+      const choice = formData.get("choice");
+      const audioData = formData.get("audioData");
+  
+      try {
+        const response = await fetch(`/${choice}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ audioData }),
+        });
+  
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Error:", errorText);
+          document.querySelector("#dynamic-text").textContent = "Error processing request.";
+        } else {
+          const data = await response.json();
+          const transcript = data.transcript || "No transcript available";
+          document.querySelector("#dynamic-text").textContent = transcript;
+        }
+      } catch (err) {
+        console.error("Error:", err.message);
+        document.querySelector("#dynamic-text").textContent = "Error occurred.";
+      }
+    });
 </script>
-
+  
 
 <!-- <script>
    const micButton = document.getElementById('mic-button');
