@@ -4,7 +4,6 @@
     <!-- Form Section -->
     <form id="audioForm" class="space-y-6">
         <div>
-            <label for="choice" class="block text-lg font-medium text-gray-700">Select an Option</label>
             <select id="choice" name="choice" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 <option value="transcript">Transcript Only</option>
                 <option value="gurbani">Gurbani Search</option>
@@ -25,7 +24,65 @@
     </form>
 </div>
 
+
 <script>
+  document.querySelector("#mic-button").addEventListener("click", async () => {
+    const micButton = document.querySelector("#mic-button");
+    const statusText = document.querySelector("#status");
+    const audioDataInput = document.querySelector("#audioData");
+    
+    let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    let recorder = new MediaRecorder(stream);
+    let chunks = [];
+
+    recorder.ondataavailable = (e) => {
+      chunks.push(e.data);
+    };
+
+    recorder.onstop = async () => {
+      let audioBlob = new Blob(chunks, { type: "audio/wav" });
+      let reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      reader.onloadend = () => {
+        audioDataInput.value = reader.result.split(",")[1]; // Set the base64 audio data
+        statusText.textContent = "Recording complete. Ready to submit.";
+      };
+    };
+
+    statusText.textContent = "Recording...";
+    recorder.start();
+    setTimeout(() => {
+      recorder.stop();
+      statusText.textContent = "Processing audio...";
+    }, 5000); // Record for 5 seconds
+  });
+
+  document.querySelector("#audioForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const choice = formData.get("choice");
+    const audioData = formData.get("audioData");
+
+    fetch(`/${choice}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ audioData }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((err) => {
+        console.error("Error:", err);
+      });
+  });
+</script>
+
+
+<!-- <script>
    const micButton = document.getElementById('mic-button');
     const statusText = document.getElementById('status');
     const recordingTime = 5; // Recording time in seconds
@@ -125,4 +182,4 @@
             statusText.textContent = "An error occurred.";
         });
     });
-</script>
+</script> -->
