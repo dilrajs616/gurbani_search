@@ -19,7 +19,7 @@
     "config": "^3.3.12",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
-    "express": "^4.19.2",
+    "express": "^3.21.2",
     "express-ejs-layouts": "^2.5.1",
     "express-layouts": "^1.0.0",
     "module-alias": "^2.2.3",
@@ -42,8 +42,6 @@
   },
   "devDependencies": {
     "daisyui": "^4.12.10",
-    "tailwindcss": "^3.4.4",
-    "webpack": "^5.94.0",
-    "webpack-cli": "^5.1.4"
+    "tailwindcss": "^3.4.4"
   }
 }
